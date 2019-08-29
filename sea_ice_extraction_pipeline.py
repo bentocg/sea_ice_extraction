@@ -3,26 +3,20 @@
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
-import asyncio
-import multiprocessing as mp
+
 import os
-import shutil
 import time
-from functools import partial
-from itertools import combinations, product
+from itertools import product
 from argparse import ArgumentParser
 from shapely.geometry import mapping
 
 import geopandas as gpd
-import numpy as np
 import rasterio
-import shapely
 import fiona
 from fiona.crs import from_epsg
 from rasterio.windows import Window
 from pyproj import transform
 from scipy.sparse.csgraph import connected_components
-from shapely.geometry import LineString, Point, Polygon
 from pathos.multiprocessing import ProcessingPool as Pool
 from multiprocessing import cpu_count
 from collections import namedtuple

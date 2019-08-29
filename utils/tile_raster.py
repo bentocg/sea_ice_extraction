@@ -18,7 +18,7 @@ def tile_raster(input_raster: str,
                 stride: float = 1,
                 thresholds: tuple = (5, 255),
                 output_dir: str = 'tiles',
-                apply_func = None):
+                mask_func = None):
     """
     Creates patches from raster.
 
@@ -32,11 +32,12 @@ def tile_raster(input_raster: str,
     # read groundtruth, panchromatic and multispectral versions of the scene
     scn_pan = rasterio.open(input_raster)
 
-    # create output folder
-    os.makedirs(output_dir, exist_ok=True)
+    # create output folders
+    for ele in ['x', 'y']:
+        os.makedirs(f"{output_dir}/{ele}", exist_ok=True)
 
     # template for output filename
-    output_filename = output_dir + '/{}_{}_{}.tif'
+    output_filename = output_dir + '/{}/{}_{}_{}.tif'
 
     # get width and height and prepare iterator for sliding window
     nrows, ncols = scn_pan.shape
@@ -55,9 +56,22 @@ def tile_raster(input_raster: str,
                 patch_pan) < thresholds[1] and patch_pan.shape == (patch_size, patch_size):
 
             try:
-                if apply_func is not None:
-                    patch_pan = apply_func(patch_pan)
-                with rasterio.open(output_filename.format(
+                if mask_func is not None:
+                    mask = mask_func(patch_pan)
+                    with rasterio.open(output_filename.format('y',
+                            input_raster.split('/')[-1].split('.')[0], row, col),
+                            mode='w',
+                            driver='GTiff',
+                            width=patch_size,
+                            height=patch_size,
+                            transform=scn_pan.window_transform(window),
+                            crs=scn_pan.crs,
+                            count=1,
+                            compress='lzw',
+                            dtype=rasterio.uint8) as dst:
+                        dst.write(mask, indexes=1)
+
+                with rasterio.open(output_filename.format('x',
                         input_raster.split('/')[-1].split('.')[0], row, col),
                                    mode='w',
                                    driver='GTiff',
